@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 習慣データのルール
+    match /habits/{habitId} {
+      // 認証済みユーザーのみが自分の習慣データにアクセス可能
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      // 新規作成時のルール
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // ユーザープロフィールのルール
+    match /users/{userId} {
+      // 自分のプロフィールのみアクセス可能
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
