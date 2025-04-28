@@ -104,6 +104,10 @@ const HabitList = ({ habits, onToggleComplete, onAddHabit, onEditHabit, onDelete
   const { t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(null);
   
+  // デバッグ用ログ
+  console.log('HabitListコンポーネント - 受け取ったhabits:', habits);
+  console.log('HabitListコンポーネント - selectedDate:', selectedDate);
+  
   // 今日の日付をYYYY-MM-DD形式で取得
   const today = formatDateToLocalYYYYMMDD(new Date());
   
@@ -124,6 +128,7 @@ const HabitList = ({ habits, onToggleComplete, onAddHabit, onEditHabit, onDelete
   
   // 完了状態の切り替え
   const handleToggleComplete = (habitId) => {
+    console.log('完了状態の切り替えを呼び出します:', habitId, dateToShow);
     onToggleComplete(habitId, dateToShow);
   };
   
@@ -135,12 +140,14 @@ const HabitList = ({ habits, onToggleComplete, onAddHabit, onEditHabit, onDelete
   
   // 削除ボタンがクリックされたとき
   const handleDelete = (habitId) => {
+    console.log('削除ボタンがクリックされました:', habitId);
     onDeleteHabit(habitId);
     setMenuOpen(null);
   };
   
   // 習慣が空の場合の表示
   if (!habits || habits.length === 0) {
+    console.log('HabitList: 習慣データが空です');
     return (
       <HabitListContainer>
         <EmptyState direction="column" align="center" justify="center">
@@ -159,7 +166,10 @@ const HabitList = ({ habits, onToggleComplete, onAddHabit, onEditHabit, onDelete
     <HabitListContainer onClick={handleClickOutside}>
       {habits.map(habit => {
         // 現在の習慣が選択された日付に完了しているかどうか
-        const isCompleted = habit.completedDates.includes(dateToShow);
+        const completedDates = Array.isArray(habit.completedDates) ? habit.completedDates : [];
+        const isCompleted = completedDates.includes(dateToShow);
+        console.log(`習慣 ${habit.id} (${habit.name}) の完了状態:`, isCompleted, '日付:', dateToShow);
+        console.log('完了日付一覧:', completedDates);
         
         return (
           <HabitCard key={habit.id} color={habit.color}>
@@ -167,7 +177,10 @@ const HabitList = ({ habits, onToggleComplete, onAddHabit, onEditHabit, onDelete
               <FlexContainer align="center" gap={1}>
                 <CompleteButton 
                   completed={isCompleted} 
-                  onClick={() => handleToggleComplete(habit.id)}
+                  onClick={() => {
+                    console.log('完了ボタンクリック:', habit.id);
+                    handleToggleComplete(habit.id);
+                  }}
                 >
                   {isCompleted ? <FaCheckCircle /> : <FaRegCircle />}
                 </CompleteButton>

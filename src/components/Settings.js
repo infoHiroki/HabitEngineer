@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { 
   FaMoon, 
@@ -7,12 +7,15 @@ import {
   FaInfoCircle, 
   FaGithub, 
   FaUserCircle,
-  FaSignOutAlt
+  FaSignOutAlt,
+  FaWrench,
+  FaDatabase
 } from 'react-icons/fa';
 import { Card, FlexContainer, Text, Button } from '../styles/CommonStyles';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage, LANGUAGES } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { fixHabitsUserIdField } from '../utils/dataFix';
 
 // スタイル付きコンポーネント
 const SettingsContainer = styled.div`
@@ -125,12 +128,48 @@ const Settings = () => {
   const { t, language, changeLanguage } = useLanguage();
   const { currentUser, logout } = useAuth();
   
+  // データ修正の状態
+  const [isFixing, setIsFixing] = useState(false);
+  const [fixResult, setFixResult] = useState(null);
+  
   // ログアウト処理
   const handleLogout = async () => {
     try {
       await logout();
     } catch (err) {
       console.error('ログアウトエラー:', err);
+    }
+  };
+  
+  // データ修正処理
+  const handleFixData = async () => {
+    if (!currentUser) return;
+    
+    // 確認ダイアログ
+    if (!window.confirm('データ修正を実行しますか？\nこの処理は既存の習慣データにuserIDフィールドが欠けている場合に修正します。')) {
+      return;
+    }
+    
+    try {
+      setIsFixing(true);
+      setFixResult(null);
+      
+      // データ修正関数を実行
+      await fixHabitsUserIdField((updatedCount) => {
+        setFixResult({
+          success: true,
+          count: updatedCount
+        });
+        setIsFixing(false);
+      });
+      
+    } catch (err) {
+      console.error('データ修正エラー:', err);
+      setFixResult({
+        success: false,
+        error: err.message
+      });
+      setIsFixing(false);
     }
   };
   
@@ -157,6 +196,42 @@ const Settings = () => {
                 <FaSignOutAlt style={{ marginRight: '8px' }} />
                 {t.logout}
               </LogoutButton>
+            </UserInfo>
+          </SettingContent>
+        </SettingCard>
+      )}
+      
+      {/* データ修正 */}
+      {currentUser && (
+        <SettingCard>
+          <SettingHeader $align="center">
+            <SettingIcon $color="error">
+              <FaWrench />
+            </SettingIcon>
+            <SettingTitle>データ修正</SettingTitle>
+          </SettingHeader>
+          <SettingContent>
+            <UserInfo>
+              <Text $variant="body2">
+                不具合が発生した場合に使用してください。
+              </Text>
+              <LogoutButton 
+                $variant="outlined"
+                onClick={handleFixData}
+                disabled={isFixing}
+              >
+                <FaDatabase style={{ marginRight: '8px' }} />
+                {isFixing ? '修正中...' : '習慣データ修正'}
+              </LogoutButton>
+              
+              {fixResult && (
+                <div style={{ marginTop: '8px', padding: '8px', backgroundColor: fixResult.success ? '#e6f7e6' : '#ffebee', borderRadius: '4px' }}>
+                  {fixResult.success 
+                    ? `${fixResult.count}件のデータを修正しました`
+                    : `エラー: ${fixResult.error}`
+                  }
+                </div>
+              )}
             </UserInfo>
           </SettingContent>
         </SettingCard>

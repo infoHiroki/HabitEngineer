@@ -107,7 +107,9 @@ export const AuthProvider = ({ children }) => {
 
   // 認証状態の監視
   useEffect(() => {
+    console.log('AuthContext - 認証状態の監視開始');
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('AuthContext - 認証状態変更:', user?.uid || 'no user');
       setCurrentUser(user);
       setLoading(false);
     });

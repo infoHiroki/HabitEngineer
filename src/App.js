@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import GlobalStyles from './styles/GlobalStyles';
 import Header from './components/Header';
@@ -58,6 +58,14 @@ function App() {
     getHabitsStatusForDate
   } = useFirestoreHabits();
   
+  // デバッグ用ログ
+  console.log('App内のhabits:', habits);
+  console.log('loading状態:', loading);
+  // 返されるjsxの直前で確認用のログをつける
+  useEffect(() => {
+    console.log('Appレンダリング時のhabits:', habits);
+  }, [habits, loading]);
+  
   // アクティブなタブの状態
   const [activeTab, setActiveTab] = useState('habits');
   
@@ -83,8 +91,13 @@ function App() {
   // 習慣削除ボタンがクリックされたとき
   const handleDeleteHabit = (habitId) => {
     // 本来は確認ダイアログを表示する
+    console.log('削除確認ダイアログ表示:', habitId);
+    
     if (window.confirm('本当に削除しますか？')) {
+      console.log('削除確認:', habitId);
       deleteHabit(habitId);
+    } else {
+      console.log('削除キャンセル:', habitId);
     }
   };
   

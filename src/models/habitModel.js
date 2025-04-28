@@ -21,6 +21,11 @@
 export const createHabit = (habitData) => {
   const now = new Date().toISOString();
   
+  // ユーザーIDが必ず含まれるように確認
+  if (!habitData.userId) {
+    console.error('警告: userIdが指定されていません');
+  }
+  
   return {
     id: habitData.id || `habit_${Date.now()}`,
     name: habitData.name || '',
@@ -32,6 +37,7 @@ export const createHabit = (habitData) => {
     color: habitData.color || '#4285F4', // デフォルトは青色
     streak: habitData.streak || 0,
     active: habitData.active !== undefined ? habitData.active : true,
+    userId: habitData.userId, // 重要: ユーザーIDを確実に含める
   };
 };
 
