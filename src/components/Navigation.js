@@ -24,10 +24,10 @@ const NavTab = styled.button`
   justify-content: center;
   gap: ${({ theme }) => theme.spacing(0.5)};
   padding: ${({ theme }) => theme.spacing(1.5)};
-  color: ${({ active, theme }) => 
-    active ? theme.colors.primary : theme.colors.text.secondary};
-  border-bottom: 2px solid ${({ active, theme }) => 
-    active ? theme.colors.primary : 'transparent'};
+  color: ${({ $active, theme }) => 
+    $active ? theme.colors.primary : theme.colors.text.secondary};
+  border-bottom: 2px solid ${({ $active, theme }) => 
+    $active ? theme.colors.primary : 'transparent'};
   transition: all 0.2s ease;
   background: none;
   border-top: none;
@@ -69,7 +69,7 @@ const Navigation = ({ activeTab, onTabChange }) => {
         {tabs.map(tab => (
           <NavTab
             key={tab.id}
-            active={activeTab === tab.id}
+            $active={activeTab === tab.id}
             onClick={() => onTabChange(tab.id)}
           >
             <TabIcon>{tab.icon}</TabIcon>

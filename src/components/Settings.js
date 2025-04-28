@@ -47,10 +47,10 @@ const SettingIcon = styled.div`
   width: 36px;
   height: 36px;
   border-radius: ${({ theme }) => theme.borderRadius.round};
-  background-color: ${({ theme, color }) => 
-    color ? `${theme.colors[color]}20` : `${theme.colors.primary}20`};
-  color: ${({ theme, color }) => 
-    color ? theme.colors[color] : theme.colors.primary};
+  background-color: ${({ theme, $color }) => 
+    $color ? `${theme.colors[$color]}20` : `${theme.colors.primary}20`};
+  color: ${({ theme, $color }) => 
+    $color ? theme.colors[$color] : theme.colors.primary};
   margin-right: ${({ theme }) => theme.spacing(1.5)};
 `;
 
@@ -61,16 +61,16 @@ const SettingContent = styled.div`
 const OptionButton = styled(Button)`
   margin-right: ${({ theme }) => theme.spacing(1)};
   margin-bottom: ${({ theme }) => theme.spacing(1)};
-  background-color: ${({ active, theme }) => 
-    active ? theme.colors.primary : 'transparent'};
-  color: ${({ active, theme }) => 
-    active ? theme.colors.text.inverse : theme.colors.text.primary};
-  border: 1px solid ${({ active, theme }) => 
-    active ? theme.colors.primary : theme.colors.divider};
+  background-color: ${({ $active, theme }) => 
+    $active ? theme.colors.primary : 'transparent'};
+  color: ${({ $active, theme }) => 
+    $active ? theme.colors.text.inverse : theme.colors.text.primary};
+  border: 1px solid ${({ $active, theme }) => 
+    $active ? theme.colors.primary : theme.colors.divider};
   
   &:hover {
-    background-color: ${({ active, theme }) => 
-      active ? theme.colors.primary : `${theme.colors.background.elevated}`};
+    background-color: ${({ $active, theme }) => 
+      $active ? theme.colors.primary : `${theme.colors.background.elevated}`};
   }
 `;
 
@@ -139,8 +139,8 @@ const Settings = () => {
       {/* アカウント設定 */}
       {currentUser && (
         <SettingCard>
-          <SettingHeader align="center">
-            <SettingIcon color="secondary">
+          <SettingHeader $align="center">
+            <SettingIcon $color="secondary">
               <FaUserCircle />
             </SettingIcon>
             <SettingTitle>{t.account}</SettingTitle>
@@ -151,7 +151,7 @@ const Settings = () => {
                 {t.loggedInAs} {currentUser.displayName || currentUser.email}
               </UserEmail>
               <LogoutButton 
-                variant="outlined"
+                $variant="outlined"
                 onClick={handleLogout}
               >
                 <FaSignOutAlt style={{ marginRight: '8px' }} />
@@ -164,25 +164,25 @@ const Settings = () => {
       
       {/* テーマ設定 */}
       <SettingCard>
-        <SettingHeader align="center">
+        <SettingHeader $align="center">
           <SettingIcon>
             {isDarkMode ? <FaMoon /> : <FaSun />}
           </SettingIcon>
           <SettingTitle>{t.darkMode}</SettingTitle>
         </SettingHeader>
         <SettingContent>
-          <FlexContainer wrap="wrap">
+          <FlexContainer $wrap="wrap">
             <OptionButton 
-              size="small" 
-              active={!isDarkMode} 
+              $size="small" 
+              $active={!isDarkMode} 
               onClick={() => !isDarkMode || toggleTheme()}
             >
               <FaSun size={14} style={{ marginRight: '4px' }} />
               {t.lightMode}
             </OptionButton>
             <OptionButton 
-              size="small" 
-              active={isDarkMode} 
+              $size="small" 
+              $active={isDarkMode} 
               onClick={() => isDarkMode || toggleTheme()}
             >
               <FaMoon size={14} style={{ marginRight: '4px' }} />
@@ -194,24 +194,24 @@ const Settings = () => {
       
       {/* 言語設定 */}
       <SettingCard>
-        <SettingHeader align="center">
+        <SettingHeader $align="center">
           <SettingIcon>
             <FaLanguage />
           </SettingIcon>
           <SettingTitle>{t.language}</SettingTitle>
         </SettingHeader>
         <SettingContent>
-          <FlexContainer wrap="wrap">
+          <FlexContainer $wrap="wrap">
             <OptionButton 
-              size="small" 
-              active={language === LANGUAGES.JA} 
+              $size="small" 
+              $active={language === LANGUAGES.JA} 
               onClick={() => changeLanguage(LANGUAGES.JA)}
             >
               🇯🇵 {t.japanese}
             </OptionButton>
             <OptionButton 
-              size="small" 
-              active={language === LANGUAGES.EN} 
+              $size="small" 
+              $active={language === LANGUAGES.EN} 
               onClick={() => changeLanguage(LANGUAGES.EN)}
             >
               🇺🇸 {t.english}
@@ -222,13 +222,13 @@ const Settings = () => {
       
       {/* アプリ情報 */}
       <AppInfo>
-        <Text variant="body2" noMargin>
+        <Text $variant="body2" $noMargin>
           <FaInfoCircle style={{ marginRight: '4px' }} />
           HabitEngineer
         </Text>
         <AppVersion>Version 0.1.0</AppVersion>
         <GithubLink 
-          href="https://github.com/username/HabitEngineer" 
+          href="https://github.com/infoHiroki/HabitEngineer" 
           target="_blank"
           rel="noopener noreferrer"
         >

@@ -68,39 +68,39 @@ const DayCell = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.small};
   cursor: pointer;
   background-color: ${({ 
-    isCurrentMonth, 
-    isSelected, 
-    isToday: isTodayProp, 
+    $isCurrentMonth, 
+    $isSelected, 
+    $isToday, 
     theme 
   }) => {
-    if (isSelected) return `${theme.colors.primary}20`;
-    if (isTodayProp) return `${theme.colors.accent}20`;
-    return isCurrentMonth ? 'transparent' : `${theme.colors.background.elevated}`;
+    if ($isSelected) return `${theme.colors.primary}20`;
+    if ($isToday) return `${theme.colors.accent}20`;
+    return $isCurrentMonth ? 'transparent' : `${theme.colors.background.elevated}`;
   }};
   color: ${({ 
-    isCurrentMonth, 
+    $isCurrentMonth, 
     theme 
-  }) => isCurrentMonth ? theme.colors.text.primary : theme.colors.text.disabled};
+  }) => $isCurrentMonth ? theme.colors.text.primary : theme.colors.text.disabled};
   border: ${({ 
-    isSelected, 
-    isToday: isTodayProp, 
+    $isSelected, 
+    $isToday, 
     theme 
   }) => {
-    if (isSelected) return `1px solid ${theme.colors.primary}`;
-    if (isTodayProp) return `1px solid ${theme.colors.accent}`;
+    if ($isSelected) return `1px solid ${theme.colors.primary}`;
+    if ($isToday) return `1px solid ${theme.colors.accent}`;
     return 'none';
   }};
   transition: all 0.2s ease;
   
   &:hover {
-    background-color: ${({ theme, isSelected }) => 
-      isSelected ? `${theme.colors.primary}30` : `${theme.colors.background.elevated}`};
+    background-color: ${({ theme, $isSelected }) => 
+      $isSelected ? `${theme.colors.primary}30` : `${theme.colors.background.elevated}`};
   }
 `;
 
 const DayNumber = styled.span`
   font-size: 0.9rem;
-  font-weight: ${({ isToday }) => isToday ? 'bold' : 'normal'};
+  font-weight: ${({ $isToday }) => $isToday ? 'bold' : 'normal'};
 `;
 
 const CompletionDot = styled.div`
@@ -108,8 +108,8 @@ const CompletionDot = styled.div`
   height: 6px;
   border-radius: 50%;
   margin-top: 2px;
-  background-color: ${({ theme, isComplete }) => 
-    isComplete ? theme.colors.secondary : theme.colors.text.disabled};
+  background-color: ${({ theme, $isComplete }) => 
+    $isComplete ? theme.colors.secondary : theme.colors.text.disabled};
 `;
 
 const CompletionIndicator = styled.div`
@@ -179,7 +179,7 @@ const CalendarView = ({
   
   return (
     <CalendarContainer>
-      <CalendarHeader justify="space-between" align="center">
+      <CalendarHeader $justify="space-between" $align="center">
         <IconButton onClick={goToPreviousMonth}>
           <FaChevronLeft />
         </IconButton>
@@ -212,12 +212,12 @@ const CalendarView = ({
           return (
             <DayCell 
               key={index}
-              isCurrentMonth={isCurrentMonth}
-              isToday={isTodayDate}
-              isSelected={isSelectedDate}
+              $isCurrentMonth={isCurrentMonth}
+              $isToday={isTodayDate}
+              $isSelected={isSelectedDate}
               onClick={() => handleDateClick(date)}
             >
-              <DayNumber isToday={isTodayDate}>
+              <DayNumber $isToday={isTodayDate}>
                 {date.getDate()}
               </DayNumber>
               {isCurrentMonth && status.total > 0 && (
@@ -227,7 +227,7 @@ const CalendarView = ({
                       <FaCheckCircle />
                     </CompletionIndicator>
                   )}
-                  <CompletionDot isComplete={hasCompletions} />
+                  <CompletionDot $isComplete={hasCompletions} />
                 </>
               )}
             </DayCell>

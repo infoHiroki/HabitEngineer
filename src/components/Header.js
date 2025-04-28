@@ -27,7 +27,7 @@ const LanguageButton = styled(IconButton)`
   position: relative;
   
   &::after {
-    content: "${({ language }) => language.toUpperCase()}";
+    content: "${({ $language }) => $language.toUpperCase()}";
     position: absolute;
     top: 50%;
     left: 50%;
@@ -53,13 +53,13 @@ const Header = () => {
   
   return (
     <HeaderContainer>
-      <FlexContainer justify="space-between" align="center">
+      <FlexContainer $justify="space-between" $align="center">
         <AppTitle>{t.appName}</AppTitle>
         
         <ButtonGroup>
           <LanguageButton 
             onClick={handleLanguageToggle}
-            language={language}
+            $language={language}
             title={language === LANGUAGES.JA ? t.english : t.japanese}
           >
             <FaLanguage />

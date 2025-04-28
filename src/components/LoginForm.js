@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaGoogle } from 'react-icons/fa';
 import { 
   Card, 
   FlexContainer, 
@@ -98,12 +98,41 @@ const LoadingSpinner = styled.div`
   }
 `;
 
+const GoogleButton = styled(Button)`
+  background-color: #4285F4;
+  margin-top: ${({ theme }) => theme.spacing(2)};
+  width: 100%;
+  
+  &:hover {
+    background-color: #357AE8;
+  }
+`;
+
+const OrDivider = styled.div`
+  display: flex;
+  align-items: center;
+  margin: ${({ theme }) => `${theme.spacing(2)} 0`};
+  
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.divider};
+  }
+  
+  span {
+    margin: 0 ${({ theme }) => theme.spacing(1)};
+    color: ${({ theme }) => theme.colors.text.secondary};
+    font-size: 0.9rem;
+  }
+`;
+
 /**
  * ログイン/登録フォームコンポーネント
  */
 const LoginForm = () => {
   const { t } = useLanguage();
-  const { signup, login, error: authError } = useAuth();
+  const { signup, login, googleLogin, error: authError } = useAuth();
   
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -145,6 +174,18 @@ const LoginForm = () => {
     }
   };
   
+  // Googleログインハンドラ
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      await googleLogin();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // ログイン/登録フォームの切り替え
   const toggleForm = () => {
     setIsLogin(!isLogin);
@@ -152,7 +193,7 @@ const LoginForm = () => {
   };
   
   return (
-    <FormContainer as="form" onSubmit={handleSubmit} padding={3}>
+    <FormContainer as="form" onSubmit={handleSubmit} $padding={3}>
       <FormTitle>
         {isLogin ? t.login || 'ログイン' : t.signup || '新規登録'}
       </FormTitle>
@@ -160,6 +201,19 @@ const LoginForm = () => {
       {(error || authError) && (
         <ErrorMessage>{error || authError}</ErrorMessage>
       )}
+      
+      <GoogleButton 
+        type="button" 
+        onClick={handleGoogleLogin} 
+        disabled={loading}
+      >
+        <FaGoogle style={{ marginRight: '8px' }} />
+        {t.loginWithGoogle || 'Googleでログイン'}
+      </GoogleButton>
+      
+      <OrDivider>
+        <span>{t.or || 'または'}</span>
+      </OrDivider>
       
       {!isLogin && (
         <FormField>

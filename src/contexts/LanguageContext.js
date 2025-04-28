@@ -70,6 +70,7 @@ export const translations = {
     login: 'ログイン',
     signup: '新規登録',
     logout: 'ログアウト',
+    loginWithGoogle: 'Googleでログイン',
     email: 'メールアドレス',
     password: 'パスワード',
     displayName: '表示名',
@@ -84,7 +85,11 @@ export const translations = {
     userNotFound: 'ユーザーが見つかりません',
     wrongPassword: 'パスワードが間違っています',
     tooManyRequests: 'アカウントが一時的に無効になっています。パスワードをリセットするか、後でもう一度お試しください',
+    popupClosed: 'ログインウィンドウが閉じられました',
+    popupCancelled: 'ログインリクエストがキャンセルされました',
+    accountExistsWithDifferentCredential: '同じメールアドレスで別の認証方法が使用されています',
     authError: '認証エラーが発生しました',
+    or: 'または'
   },
   [LANGUAGES.EN]: {
     appName: 'HabitEngineer',
@@ -148,6 +153,7 @@ export const translations = {
     login: 'Login',
     signup: 'Sign Up',
     logout: 'Logout',
+    loginWithGoogle: 'Sign in with Google',
     email: 'Email',
     password: 'Password',
     displayName: 'Display Name',
@@ -162,7 +168,11 @@ export const translations = {
     userNotFound: 'User not found',
     wrongPassword: 'Incorrect password',
     tooManyRequests: 'Account temporarily disabled. Reset your password or try again later',
+    popupClosed: 'Login window was closed',
+    popupCancelled: 'Login request was cancelled',
+    accountExistsWithDifferentCredential: 'An account already exists with the same email address but different sign-in credentials',
     authError: 'Authentication error occurred',
+    or: 'or'
   }
 };
 

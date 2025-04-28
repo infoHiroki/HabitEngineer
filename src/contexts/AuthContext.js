@@ -4,7 +4,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { useLanguage } from './LanguageContext';
@@ -51,6 +53,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Googleログイン
+  const googleLogin = async () => {
+    try {
+      setError(null);
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      return userCredential.user;
+    } catch (err) {
+      const errorMessage = getErrorMessage(err.code);
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
   // ログアウト
   const logout = async () => {
     try {
@@ -78,6 +94,12 @@ export const AuthProvider = ({ children }) => {
         return t.wrongPassword || 'パスワードが間違っています';
       case 'auth/too-many-requests':
         return t.tooManyRequests || 'アカウントが一時的に無効になっています。パスワードをリセットするか、後でもう一度お試しください';
+      case 'auth/popup-closed-by-user':
+        return t.popupClosed || 'ログインウィンドウが閉じられました';
+      case 'auth/cancelled-popup-request':
+        return t.popupCancelled || 'ログインリクエストがキャンセルされました';
+      case 'auth/account-exists-with-different-credential':
+        return t.accountExistsWithDifferentCredential || '同じメールアドレスで別の認証方法が使用されています';
       default:
         return t.authError || '認証エラーが発生しました';
     }
@@ -99,6 +121,7 @@ export const AuthProvider = ({ children }) => {
     error,
     signup,
     login,
+    googleLogin,
     logout
   };
 

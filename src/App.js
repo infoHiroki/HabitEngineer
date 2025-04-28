@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { LanguageProvider } from './contexts/LanguageContext';
-import { AuthProvider } from './contexts/AuthContext';
 import GlobalStyles from './styles/GlobalStyles';
 import Header from './components/Header';
 import Navigation from './components/Navigation';
@@ -117,73 +114,69 @@ function App() {
   };
 
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <GlobalStyles />
-          <AppContainer>
-            <Header />
-            
-            <MainContent>
-              <PrivateRoute>
-                <ContentWrapper>
-                  {/* 習慣タブ */}
-                  {activeTab === 'habits' && (
-                    <>
-                      <CalendarWrapper>
-                        <CalendarView 
-                          habits={habits}
-                          selectedDate={selectedDate}
-                          onDateSelect={handleDateSelect}
-                          getHabitsStatusForDate={getHabitsStatusForDate}
-                        />
-                      </CalendarWrapper>
-                      
-                      <HabitList 
-                        habits={habits}
-                        onToggleComplete={toggleHabitCompletion}
-                        onAddHabit={handleAddHabit}
-                        onEditHabit={handleEditHabit}
-                        onDeleteHabit={handleDeleteHabit}
-                        selectedDate={selectedDate}
-                      />
-                    </>
-                  )}
+    <>
+      <GlobalStyles />
+      <AppContainer>
+        <Header />
+        
+        <MainContent>
+          <PrivateRoute>
+            <ContentWrapper>
+              {/* 習慣タブ */}
+              {activeTab === 'habits' && (
+                <>
+                  <CalendarWrapper>
+                    <CalendarView 
+                      habits={habits}
+                      selectedDate={selectedDate}
+                      onDateSelect={handleDateSelect}
+                      getHabitsStatusForDate={getHabitsStatusForDate}
+                    />
+                  </CalendarWrapper>
                   
-                  {/* 統計タブ */}
-                  {activeTab === 'stats' && (
-                    <StatsView habits={habits} />
-                  )}
-                  
-                  {/* 設定タブ */}
-                  {activeTab === 'settings' && (
-                    <Settings />
-                  )}
-                </ContentWrapper>
-              </PrivateRoute>
-            </MainContent>
-            
-            <Navigation 
-              activeTab={activeTab} 
-              onTabChange={setActiveTab} 
-            />
-            
-            {/* 習慣追加/編集モーダル */}
-            {showModal && (
-              <Modal onClick={handleCancelModal}>
-                <div onClick={e => e.stopPropagation()}>
-                  <HabitForm 
-                    habit={editingHabit}
-                    onSubmit={handleFormSubmit}
-                    onCancel={handleCancelModal}
+                  <HabitList 
+                    habits={habits}
+                    onToggleComplete={toggleHabitCompletion}
+                    onAddHabit={handleAddHabit}
+                    onEditHabit={handleEditHabit}
+                    onDeleteHabit={handleDeleteHabit}
+                    selectedDate={selectedDate}
                   />
-                </div>
-              </Modal>
-            )}
-          </AppContainer>
-        </AuthProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+                </>
+              )}
+              
+              {/* 統計タブ */}
+              {activeTab === 'stats' && (
+                <StatsView habits={habits} />
+              )}
+              
+              {/* 設定タブ */}
+              {activeTab === 'settings' && (
+                <Settings />
+              )}
+            </ContentWrapper>
+          </PrivateRoute>
+        </MainContent>
+        
+        <Navigation 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab} 
+        />
+        
+        {/* 習慣追加/編集モーダル */}
+        {showModal && (
+          <Modal onClick={handleCancelModal}>
+            <div onClick={e => e.stopPropagation()}>
+              <HabitForm 
+                habit={editingHabit}
+                onSubmit={handleFormSubmit}
+                onCancel={handleCancelModal}
+              />
+            </div>
+          </Modal>
+        )}
+      </AppContainer>
+    </>
   );
 }
 
