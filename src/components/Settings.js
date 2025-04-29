@@ -16,6 +16,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage, LANGUAGES } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { fixHabitsUserIdField } from '../utils/dataFix';
+import DebugPanel from './DebugPanel';
 
 // スタイル付きコンポーネント
 const SettingsContainer = styled.div`
@@ -146,7 +147,7 @@ const Settings = () => {
     if (!currentUser) return;
     
     // 確認ダイアログ
-    if (!window.confirm('データ修正を実行しますか？\nこの処理は既存の習慣データにuserIDフィールドが欠けている場合に修正します。')) {
+    if (!window.confirm(t.confirmDataFix)) {
       return;
     }
     
@@ -208,12 +209,12 @@ const Settings = () => {
             <SettingIcon $color="error">
               <FaWrench />
             </SettingIcon>
-            <SettingTitle>データ修正</SettingTitle>
+            <SettingTitle>{t.dataFix}</SettingTitle>
           </SettingHeader>
           <SettingContent>
             <UserInfo>
               <Text $variant="body2">
-                不具合が発生した場合に使用してください。
+                {t.dataFixDescription}
               </Text>
               <LogoutButton 
                 $variant="outlined"
@@ -221,20 +222,25 @@ const Settings = () => {
                 disabled={isFixing}
               >
                 <FaDatabase style={{ marginRight: '8px' }} />
-                {isFixing ? '修正中...' : '習慣データ修正'}
+                {isFixing ? t.fixing : t.fixHabitData}
               </LogoutButton>
               
               {fixResult && (
                 <div style={{ marginTop: '8px', padding: '8px', backgroundColor: fixResult.success ? '#e6f7e6' : '#ffebee', borderRadius: '4px' }}>
                   {fixResult.success 
-                    ? `${fixResult.count}件のデータを修正しました`
-                    : `エラー: ${fixResult.error}`
+                    ? `${fixResult.count}${t.fixSuccess}`
+                    : `${t.fixError} ${fixResult.error}`
                   }
                 </div>
               )}
             </UserInfo>
           </SettingContent>
         </SettingCard>
+      )}
+      
+      {/* デバッグパネル */}
+      {currentUser && (
+        <DebugPanel />
       )}
       
       {/* テーマ設定 */}

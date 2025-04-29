@@ -27,7 +27,8 @@ export const createHabit = (habitData) => {
   }
   
   return {
-    id: habitData.id || `habit_${Date.now()}`,
+    // 一意のIDはクライアント側で事前生成しないようにする
+    // Firestoreが生成するIDを使用する
     name: habitData.name || '',
     description: habitData.description || '',
     frequency: habitData.frequency || 'daily',

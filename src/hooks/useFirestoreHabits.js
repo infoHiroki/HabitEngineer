@@ -1,21 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  collection,
-  doc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  onSnapshot
-} from 'firebase/firestore';
-import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { createHabit, calculateStreak } from '../models/habitModel';
+import * as habitService from '../services/habitService';
 
 /**
  * Firebase Firestoreを使用して習慣データを管理するカスタムフック
+ * habitServiceを使用して実装
  */
 const useFirestoreHabits = () => {
   const [habits, setHabits] = useState([]);
@@ -25,13 +14,6 @@ const useFirestoreHabits = () => {
   // 認証コンテキストを使用
   const auth = useAuth();
   const currentUser = auth?.currentUser;
-
-  // ユーザーの習慣コレクションの参照
-  const HABITS_COLLECTION = 'habits'; // Firestoreのコレクション名
-  const habitsRef = collection(db, HABITS_COLLECTION);
-  
-  console.log('useFirestoreHabits初期化 - auth状態:', auth?.currentUser?.uid);
-  console.log('Firestoreコレクション名:', HABITS_COLLECTION);
 
   // ユーザーのデータをリアルタイムで監視
   useEffect(() => {
@@ -49,72 +31,61 @@ const useFirestoreHabits = () => {
       return;
     }
     
-    console.log('認証情報取得完了:', currentUser.uid);
-
-    console.log('Firestoreからデータを取得開始...');
+    console.log('データ取得開始：', currentUser.uid);
     setLoading(true);
 
-    // ユーザーIDに基づくクエリを作成
-    const q = query(
-      habitsRef,
-      where('userId', '==', currentUser.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    console.log('クエリ作成:', currentUser.uid);
-
-    // リアルタイム更新をリッスン
-    console.log('リアルタイムリスナー設定開始', currentUser.uid);
-    let isFirstLoad = true;
-    
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        console.log('スナップショット受信:', isFirstLoad ? '初回読み込み' : '更新');
-        console.log('Firestoreデータ更新:', snapshot.docs.length, '件');
-        console.log('スナップショットタイプ:', snapshot.metadata.hasPendingWrites ? 'ローカル' : 'サーバー');
+    // ローカルストレージからキャッシュされたデータを取得
+    const cachedData = localStorage.getItem(`habits_${currentUser.uid}`);
+    if (cachedData) {
+      try {
+        const parsedData = JSON.parse(cachedData);
+        const cacheTimestamp = localStorage.getItem(`habits_timestamp_${currentUser.uid}`);
+        const now = Date.now();
         
-        if (snapshot.metadata.hasPendingWrites && !isFirstLoad) {
-          console.log('ローカル変更のみなのでスキップします');
-          return;
+        // キャッシュが5分以内の場合はキャッシュを使用
+        if (cacheTimestamp && (now - parseInt(cacheTimestamp)) < 300000) { // 5分 = 300000ミリ秒
+          console.log('キャッシュからデータを読み込み:', parsedData.length, '件');
+          setHabits(parsedData);
+          setLoading(false);
+          return; // キャッシュが有効な場合はリクエストを送らない
+        }
+      } catch (err) {
+        console.error('キャッシュの解析エラー:', err);
+        // キャッシュの解析に失敗した場合は無視して通常のフェッチを行う
+      }
+    }
+
+    // データを取得
+    const fetchHabits = async () => {
+      try {
+        const habitsData = await habitService.fetchUserHabits();
+        console.log('取得したデータ:', habitsData);
+        
+        // ローカルストレージにデータをキャッシュ
+        try {
+          localStorage.setItem(`habits_${currentUser.uid}`, JSON.stringify(habitsData));
+          localStorage.setItem(`habits_timestamp_${currentUser.uid}`, Date.now().toString());
+        } catch (err) {
+          console.error('キャッシュ保存エラー:', err);
         }
         
-        const habitsList = [];
-        
-        snapshot.docs.forEach(doc => {
-          const data = doc.data();
-          console.log(`ドキュメント ID: ${doc.id}`, data);
-          // ここで必要なデータの始まり整備を行う
-          if (!data.completedDates) {
-            data.completedDates = [];
-            console.log('注意: completedDatesが無いため空配列を設定');
-          }
-          
-          habitsList.push({
-            id: doc.id,
-            ...data,
-            completedDates: Array.isArray(data.completedDates) ? data.completedDates : [],
-            streak: typeof data.streak === 'number' ? data.streak : 0,
-            active: typeof data.active === 'boolean' ? data.active : true
-          });
-        });
-        
-        console.log('変換後のhabitsデータ:', habitsList);
-        setHabits(habitsList);
-        setLoading(false);
+        setHabits(habitsData);
         setError(null);
-        isFirstLoad = false;
-      },
-      (err) => {
+      } catch (err) {
         console.error('習慣データの取得エラー:', err);
         setError('習慣データの取得に失敗しました');
+      } finally {
         setLoading(false);
       }
-    );
+    };
 
-    // コンポーネントのアンマウント時にリスナーを解除
-    return () => unsubscribe();
-  }, [currentUser, auth, habitsRef]); // habitsRefを依存配列に追加
+    fetchHabits();
+
+    // コンポーネントのアンマウント時にクリーンアップ
+    return () => {
+      console.log('useFirestoreHabits クリーンアップ');
+    };
+  }, [currentUser, auth]);
 
   /**
    * 新しい習慣を追加
@@ -127,30 +98,22 @@ const useFirestoreHabits = () => {
     }
 
     try {
-      console.log('習慣データを作成中...', habitData);
-      // userIdが確実に含まれるようにする
-      const newHabit = createHabit({
-        ...habitData,
-        userId: currentUser.uid
-      });
-      console.log('作成した習慣データ:', newHabit);
-      console.log('ユーザーID確認:', newHabit.userId);
-
-      console.log('Firestoreに保存中...');
-      const docRef = await addDoc(habitsRef, newHabit);
-      console.log('保存完了！ドキュメントID:', docRef.id);
-      const addedHabit = { id: docRef.id, ...newHabit };
+      console.log('習慣データを追加中...', habitData);
       
-      // 追加されたデータを即座に確認
-      console.log('追加完了後のデータを確認:', addedHabit);
+      // habitServiceを使用して習慣を追加
+      const newHabit = await habitService.addHabit(habitData);
+      console.log('新しい習慣が追加されました:', newHabit);
       
-      return addedHabit;
+      // ローカルの習慣配列を更新
+      setHabits(prev => [newHabit, ...prev]);
+      
+      return newHabit;
     } catch (err) {
       console.error('習慣の追加エラー:', err);
       setError('習慣の追加に失敗しました');
       throw err;
     }
-  }, [currentUser, habitsRef]);
+  }, [currentUser]);
 
   /**
    * 習慣を更新
@@ -165,9 +128,18 @@ const useFirestoreHabits = () => {
 
     try {
       console.log('習慣を更新中...', id, updates);
-      const habitRef = doc(db, 'habits', id);
-      await updateDoc(habitRef, updates);
-      console.log('習慣の更新が完了しました:', id, updates);
+      
+      // habitServiceを使用して習慣を更新
+      await habitService.updateHabit(id, updates);
+      
+      // ローカルの習慣配列を更新
+      setHabits(prev => 
+        prev.map(habit => 
+          habit.id === id ? { ...habit, ...updates } : habit
+        )
+      );
+      
+      console.log('習慣の更新が完了しました');
     } catch (err) {
       console.error('習慣の更新エラー:', err);
       setError('習慣の更新に失敗しました');
@@ -188,18 +160,13 @@ const useFirestoreHabits = () => {
     try {
       console.log('習慣を削除中...', id);
       
-      // 存在確認
-      const habitExists = habits.some(habit => habit.id === id);
-      if (!habitExists) {
-        console.log('削除する習慣が見つかりません:', id);
-        return;
-      }
+      // habitServiceを使用して習慣を削除
+      await habitService.deleteHabit(id);
       
-      // ドキュメント参照を作成して削除
-      const habitRef = doc(db, 'habits', id);
-      console.log('ドキュメント削除実行:', id);
-      await deleteDoc(habitRef);
-      console.log('習慣の削除が完了しました:', id);
+      // ローカルの習慣配列を更新
+      setHabits(prev => prev.filter(habit => habit.id !== id));
+      
+      console.log('習慣の削除が完了しました');
     } catch (err) {
       console.error('習慣の削除エラー:', err);
       setError('習慣の削除に失敗しました');
@@ -220,57 +187,88 @@ const useFirestoreHabits = () => {
 
     try {
       console.log('習慣の完了状態を切り替え中...', id, dateString);
-      const habit = habits.find(h => h.id === id);
-      if (!habit) {
-        console.log('該当する習慣が見つかりません:', id);
-        return;
+      
+      // ローカル更新を先に行い、UIの反応を早くする
+      const targetHabit = habits.find(habit => habit.id === id);
+      if (!targetHabit) {
+        throw new Error(`習慣ID ${id} が見つかりません`);
       }
-
-      // completedDatesが配列であることを確認
-      const completedDates = Array.isArray(habit.completedDates) ? habit.completedDates : [];
-      console.log('現在の完了日:', completedDates);
-
-      let updatedCompletedDates;
+      
+      const completedDates = Array.isArray(targetHabit.completedDates) ? [...targetHabit.completedDates] : [];
+      let updatedDates;
+      
       if (completedDates.includes(dateString)) {
         // 完了を取り消す
-        updatedCompletedDates = completedDates.filter(date => date !== dateString);
-        console.log('完了を取り消します');
+        updatedDates = completedDates.filter(date => date !== dateString);
       } else {
         // 完了を追加
-        updatedCompletedDates = [...completedDates, dateString];
-        console.log('完了を追加します');
+        updatedDates = [...completedDates, dateString];
       }
-
-      // 更新された習慣データ
+      
+      // ストリークを再計算（簡易実装）
+      let streak = 0;
+      if (updatedDates.length > 0) {
+        const sortedDates = [...updatedDates].sort((a, b) => new Date(b) - new Date(a));
+        streak = 1;
+        
+        for (let i = 1; i < sortedDates.length; i++) {
+          const prevDate = new Date(sortedDates[i-1]);
+          const currDate = new Date(sortedDates[i]);
+          const diffDays = Math.round((prevDate - currDate) / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 1) {
+            streak++;
+          } else {
+            break;
+          }
+        }
+      }
+      
+      // ローカルの状態を先に更新（オプティミスティック更新）
       const updatedHabit = {
-        ...habit,
-        completedDates: updatedCompletedDates,
-        streak: calculateStreak({
-          ...habit,
-          completedDates: updatedCompletedDates
-        })
+        ...targetHabit,
+        completedDates: updatedDates,
+        streak
       };
-      console.log('更新後の習慣データ:', updatedHabit);
-
-      // Firestoreで更新
-      const habitRef = doc(db, 'habits', id);
-      console.log('ドキュメント更新中:', id);
       
-      // 更新データを明示的に確認
-      const updateData = {
-        completedDates: updatedCompletedDates,
-        streak: updatedHabit.streak
-      };
-      console.log('送信する更新データ:', updateData);
+      setHabits(prev => 
+        prev.map(habit => 
+          habit.id === id ? updatedHabit : habit
+        )
+      );
       
-      await updateDoc(habitRef, updateData);
+      // ローカルストレージのキャッシュも更新
+      try {
+        const cachedData = localStorage.getItem(`habits_${currentUser.uid}`);
+        if (cachedData) {
+          const parsedData = JSON.parse(cachedData);
+          const updatedCache = parsedData.map(habit => 
+            habit.id === id ? updatedHabit : habit
+          );
+          localStorage.setItem(`habits_${currentUser.uid}`, JSON.stringify(updatedCache));
+          localStorage.setItem(`habits_timestamp_${currentUser.uid}`, Date.now().toString());
+        }
+      } catch (err) {
+        console.error('キャッシュ更新エラー:', err);
+      }
+      
+      // オフラインモードが有効かどうか確認
+      if (!navigator.onLine) {
+        console.log('オフラインモードです。ローカルのみ更新します');
+        return updatedHabit;
+      }
+      
+      // サーバー側での更新
+      const serverUpdatedHabit = await habitService.toggleHabitCompletion(id, dateString);
+      
       console.log('完了状態の更新が完了しました');
+      return serverUpdatedHabit;
     } catch (err) {
       console.error('習慣の完了状態更新エラー:', err);
       setError('習慣の完了状態の更新に失敗しました');
       throw err;
     }
-  }, [habits]);
+  }, [currentUser, habits]);
 
   /**
    * 特定の日付の習慣達成状況を取得
@@ -286,7 +284,9 @@ const useFirestoreHabits = () => {
 
     habits.forEach(habit => {
       if (habit.active) {
-        const isCompleted = habit.completedDates.includes(dateString);
+        const completedDates = Array.isArray(habit.completedDates) ? habit.completedDates : [];
+        const isCompleted = completedDates.includes(dateString);
+        
         result.habits.push({
           id: habit.id,
           name: habit.name,
@@ -307,6 +307,29 @@ const useFirestoreHabits = () => {
     return result;
   }, [habits]);
 
+  /**
+   * 全てのデータを再取得
+   */
+  const refreshHabits = useCallback(async () => {
+    if (!currentUser) {
+      console.log('ユーザーがログインしていないため、データを再取得できません');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const habitsData = await habitService.fetchUserHabits();
+      console.log('データを再取得しました:', habitsData);
+      setHabits(habitsData);
+      setError(null);
+    } catch (err) {
+      console.error('データ再取得エラー:', err);
+      setError('データの再取得に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser]);
+
   return {
     habits,
     loading,
@@ -315,7 +338,8 @@ const useFirestoreHabits = () => {
     updateHabit,
     deleteHabit,
     toggleHabitCompletion,
-    getHabitsStatusForDate
+    getHabitsStatusForDate,
+    refreshHabits
   };
 };
 
